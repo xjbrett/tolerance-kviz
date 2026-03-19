@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tolerance kvíz</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+button:hover:not(:disabled) { opacity: 0.8; }
+.ascii {
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #444;
+  background: #efefef;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 14px 18px;
+  white-space: pre;
+  display: inline-block;
+  margin-bottom: 18px;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const Q = [
+  {
+    tag: "skola",
+    art: [
+      "  [TRIDA - 25 zaku]         ",
+      "                            ",
+      "  o  o  o  o  o  o  o  o   ",
+      " /|\\/|\\/|\\/|\\/|\\/|\\/|\\/|\\  ",
+      " / \\ / \\ / \\ / \\ / \\ / \\   ",
+      "  (smich, baveni se...)     ",
+      "                            ",
+      "         o  <- novy         ",
+      "        /|\\   :(            ",
+      "        / \\                 ",
+      "    (sedi sam v koutku)     ",
+    ].join("\n"),
+    text: "Do třídy přišel nový spolužák z jiné země. Neumí moc česky a sedí sám o přestávce.",
+    choices: [
+      "Jdeš za ním a zkusíš si promluvit.",
+      "Necháš ho být, není tvůj kamarád.",
+      "Smějete se, jak mluví divně.",
+      "Řekneš mu, ať jde zpět domů.",
+    ],
+    correct: 0,
+    feedback: "Přivítat nového spolužáka nic nestojí a pro něj to znamená hodně.",
+  },
+  {
+    tag: "jidelna",
+    art: [
+      "  .----------------------.  ",
+      "  |   JIDELNA - MENU     |  ",
+      "  |----------------------|  ",
+      "  |  [x]  vepro-knedlo   |  ",
+      "  |  [x]  svickova       |  ",
+      "  |  [x]  rizek          |  ",
+      "  |  [ ]  halal / vege   |  ",
+      "  |        ???           |  ",
+      "  '----------------------'  ",
+      "                            ",
+      "  o  'a pro mne??'          ",
+      " /|\\                        ",
+      " / \\                        ",
+    ].join("\n"),
+    text: "Spolužák říká, že nemůže jíst vepřové kvůli svému náboženství. Ostatní se mu smějí.",
+    choices: [
+      "Smějete se taky.",
+      "Bráníš ho – každý má právo jíst podle svého.",
+      "Řekneš mu, ať si zvykne.",
+      "Ignoruješ situaci.",
+    ],
+    correct: 1,
+    feedback: "Náboženství a stravovací zvyky jsou osobní věc každého člověka.",
+  },
+  {
+    tag: "chodba",
+    art: [
+      "      o   <- spoluzacka     ",
+      "     /|\\                    ",
+      "    [___]  vozicek          ",
+      "     O O                   ",
+      "                            ",
+      "  __|__|__|__|__|__         ",
+      "  SCHODY -> -> -> ->        ",
+      "  __|__|__|__|__|__         ",
+      "                            ",
+      "  ostatni: ...              ",
+      "  (nikdo nepomaha)          ",
+    ].join("\n"),
+    text: "Spolužačka jezdí na vozíčku. Před třídou jsou schody a nikdo jí nepomůže.",
+    choices: [
+      "Počkáš, co udělají ostatní.",
+      "Pomůžeš jí sám/sama bez zbytečného dramatu.",
+      "Řekneš, že to není tvůj problém.",
+      "Zasmějete se, jak je pomalá.",
+    ],
+    correct: 1,
+    feedback: "Pomoc bez zbytečného povyku je ta nejlepší pomoc.",
+  },
+  {
+    tag: "internet",
+    art: [
+      "  .---------------------.   ",
+      "  |  @ kamarad          |   ",
+      "  |  [foto]  sdilim!    |   ",
+      "  |  'Romove jsou...'   |   ",
+      "  |  47 likes  12 share |   ",
+      "  '---------------------'   ",
+      "                            ",
+      "  ty: vidis ten post...     ",
+      "  co udelat??               ",
+    ].join("\n"),
+    text: "Kamarád sdílí na internetu příspěvek, který zesměšňuje Romy. Přijde ti to špatné.",
+    choices: [
+      "Lajkuješ to taky.",
+      "Napíšeš mu soukromě, že ti to přijde špatné.",
+      "Mlčíš, nechceš konflikt.",
+      "Veřejně ho zostudíš.",
+    ],
+    correct: 1,
+    feedback: "Soukromý rozhovor je lepší než veřejná hádka nebo mlčení.",
+  },
+  {
+    tag: "fotbal",
+    art: [
+      "   o    o    o    o         ",
+      "  /|\\  /|\\  /|\\  /|\\        ",
+      "  / \\  / \\  / \\  / \\        ",
+      "   |    |    |              ",
+      "   '--  '--  '--            ",
+      "   (prihravaji si)          ",
+      "                            ",
+      "          o  <- novy (Rom)  ",
+      "         /|\\   stoji sam    ",
+      "         / \\                ",
+      "   (nikdo mu neprihra)      ",
+    ].join("\n"),
+    text: "Ve fotbalovém týmu je nový kluk – Rom. Ostatní mu záměrně nepřihrávají.",
+    choices: [
+      "Taky mu nepřihráváš.",
+      "Přihráváš mu normálně jako ostatním.",
+      "Řekneš mu, ať jde hrát jinam.",
+      "Ignoruješ celou situaci.",
+    ],
+    correct: 1,
+    feedback: "Na hřišti rozhoduje schopnost, ne původ.",
+  },
+  {
+    tag: "hodina",
+    art: [
+      "  HODINA CTENI              ",
+      "  --------------------------",
+      "  Petr: 'b... d... p...'    ",
+      "         (cte pomalu)       ",
+      "                            ",
+      "  o  o  <- smich v lavici   ",
+      " /|\\/|\\                     ",
+      " / \\ / \\                    ",
+      "  'haha  je to blbec'       ",
+      "                            ",
+      "  ty: ...?                  ",
+    ].join("\n"),
+    text: "Spolužák s dyslexií čte nahlas pomalu. Někdo se začne smát.",
+    choices: [
+      "Taky se chechtáš.",
+      "Mlčíš.",
+      "Řekneš smějícímu se spolužákovi, ať toho nechá.",
+      "Začneš číst za něj bez ptaní.",
+    ],
+    correct: 2,
+    feedback: "Zastavit šikanu v tu chvíli je víc než mlčet nebo smát se.",
+  },
+  {
+    tag: "rodina",
+    art: [
+      "  .------------------------. ",
+      "  |     VANOCNI VECERE    | ",
+      "  |------------------------| ",
+      "  |   o      o      o     | ",
+      "  |  /|\\    /|\\    /|\\    | ",
+      "  | tatinek mama  babicka | ",
+      "  |                      | ",
+      "  | babicka: 'ha ha ha   | ",
+      "  |   ...rasisticky vtip' | ",
+      "  | ostatni: haha / ticho| ",
+      "  '------------------------' ",
+    ].join("\n"),
+    text: "Babička u večeře řekne vtip, který zesměšňuje lidi jiné barvy pleti.",
+    choices: [
+      "Taky se zasměješ.",
+      "Mlčíš, nechceš problém.",
+      "Klidně řekneš, že ti to nepřipadá vtipné.",
+      "Odejdeš od stolu.",
+    ],
+    correct: 2,
+    feedback: "Říct to klidně a jasně je odvaha. I v rodině.",
+  },
+  {
+    tag: "satna",
+    art: [
+      "       .---.                ",
+      "      (o . o)  <- spoluzacka",
+      "       \\ ^ /               ",
+      "     ___| |___              ",
+      "    / hijab    \\            ",
+      "   /____________\\           ",
+      "                            ",
+      "  ostatni: 'proc to         ",
+      "   nosIS? nutí te rodice??' ",
+      "                            ",
+      "  ty: ???                   ",
+    ].join("\n"),
+    text: "Spolužačka nosí hidžáb. Ostatní se jí ptají, jestli ji nutí rodiče.",
+    choices: [
+      "Taky se ptáš na detaily.",
+      "Bráníš ji – je to její věc a její volba.",
+      "Mlčíš.",
+      "Řekneš učiteli.",
+    ],
+    correct: 1,
+    feedback: "Předpokládat útlak bez důvodu je taky forma předsudku.",
+  },
+  {
+    tag: "chat",
+    art: [
+      "  .------------------------. ",
+      "  |   SKUPINOVY CHAT      | ",
+      "  |------------------------| ",
+      "  | Honza: [meme] haha xd | ",
+      "  | Pavel:  lmao           | ",
+      "  | Jakub:  hahaha         | ",
+      "  | Lukas:  xdddd          | ",
+      "  |                        | ",
+      "  | ty:  ....???           | ",
+      "  '------------------------' ",
+      "  (meme zesmesnuje trans     ",
+      "   lidi)                     ",
+    ].join("\n"),
+    text: "Ve třídním chatu někdo pošle meme, který zesměšňuje trans lidi.",
+    choices: [
+      "Lajkuješ.",
+      "Mlčíš.",
+      "Napíšeš, že ti to přijde zbytečně kruté.",
+      "Opustíš skupinu bez komentáře.",
+    ],
+    correct: 2,
+    feedback: "Říct svůj názor klidně a jasně má větší váhu než mlčení.",
+  },
+  {
+    tag: "trida",
+    art: [
+      "   UA ---------> CZ         ",
+      "   ~~~~~~~~~~~~~~~~~~~~~~~~ ",
+      "                            ",
+      "    o  ->  [TRIDA]          ",
+      "   /|\\                      ",
+      "   / \\  'ahoj...'           ",
+      "                            ",
+      "   o  o  o  <- ostatni      ",
+      "  /|\\/|\\/|\\                 ",
+      "  (ticho, ignoruji)         ",
+    ].join("\n"),
+    text: "Do třídy přišel žák z Ukrajiny. Mluví lámanou češtinou a je tichý.",
+    choices: [
+      "Ignoruješ ho jako ostatní.",
+      "Mluvíš na něj pomalu jako na malé dítě.",
+      "Přivítáš ho normálně a zapojíš ho do hovoru.",
+      "Ptáš se ho na válku před celou třídou.",
+    ],
+    correct: 2,
+    feedback: "Nový jazyk neznamená nízkou inteligenci. Chovat se normálně je základ.",
+  },
+  {
+    tag: "test",
+    art: [
+      "  .------------------------. ",
+      "  |   TEST  - 45 minut    | ",
+      "  |------------------------| ",
+      "  | 1. otazka ........... | ",
+      "  | 2. otazka ........... | ",
+      "  | 3. otazka ........... | ",
+      "  '------------------------' ",
+      "                            ",
+      "  Adam (ADHD): 'vic casu??' ",
+      "                            ",
+      "  spoluzak: 'to neni fer!!' ",
+    ].join("\n"),
+    text: "Spolužák má ADHD a potřebuje více času na testy. Někdo říká, že to není fér.",
+    choices: [
+      "Souhlasíš, že to není fér.",
+      "Vysvětlíš, že každý potřebuje jiné podmínky.",
+      "Mlčíš.",
+      "Stěžuješ si učiteli.",
+    ],
+    correct: 1,
+    feedback: "Rovnost neznamená, že každý dostane to samé – ale to, co potřebuje.",
+  },
+  {
+    tag: "prestavka",
+    art: [
+      "   Nike    Adidas   Guess   ",
+      "    o        o        o     ",
+      "   /|\\      /|\\      /|\\    ",
+      "   / \\      / \\      / \\    ",
+      "  (bavici se ve skupine)    ",
+      "                            ",
+      "      o  <- bez znacek      ",
+      "     /|\\   stoji bokem      ",
+      "     / \\                    ",
+      "  (nikdo ho nezve dovnitr)  ",
+    ].join("\n"),
+    text: "Spolužák je z chudší rodiny a nemá značkové oblečení. Ostatní ho kvůli tomu vylučují.",
+    choices: [
+      "Taky ho nevpustíš do party.",
+      "Mlčíš.",
+      "Normálně s ním mluvíš a zveš ho do skupiny.",
+      "Řekneš ostatním, ať si koupí mozek.",
+    ],
+    correct: 2,
+    feedback: "Oblečení nevypovídá nic o člověku. Vylučování kvůli penězům je šikana.",
+  },
+  {
+    tag: "diskuze",
+    art: [
+      "  HODINA - diskuze           ",
+      "  ===========================",
+      "  ucitel: 'co si myslite     ",
+      "    o uprchlicich?'          ",
+      "                             ",
+      "  Tomas: 'VSICHNI jsou       ",
+      "    stejni a jsou lini!!'    ",
+      "                             ",
+      "  ostatni: souhlas / ticho   ",
+      "                             ",
+      "  ty: ....???                ",
+    ].join("\n"),
+    text: "Při hodině se spolužák vyjádří, že všichni uprchlíci jsou líní. Učitel se ptá na názory.",
+    choices: [
+      "Souhlasíš, ať je klid.",
+      "Mlčíš.",
+      "Klidně řekneš, že generalizace není fér a každý je jiný.",
+      "Začneš se hádat nahlas.",
+    ],
+    correct: 2,
+    feedback: "Klidně a věcně říct jiný názor je důležité. Generalizace jsou vždy nepřesné.",
+  },
+  {
+    tag: "satna",
+    art: [
+      "         rukav               ",
+      "    .-----------.            ",
+      "    |  /\\/\\/\\/  |  <- jizvy  ",
+      "    '-----------'            ",
+      "                             ",
+      "  ostatni za zady:           ",
+      "  'co to je??'               ",
+      "  'proc to ma?'              ",
+      "  'asi si ublizel...'        ",
+      "                             ",
+      "  ty: slysiš je...           ",
+    ].join("\n"),
+    text: "Všimneš si, že spolužák má na ruce jizvy. Ostatní o tom šuškají a spekulují.",
+    choices: [
+      "Přidáš se k spekulacím.",
+      "Mlčíš a nic neřešíš.",
+      "Zastavíš konverzaci – není to věc ostatních.",
+      "Zeptáš se ho nahlas před třídou.",
+    ],
+    correct: 2,
+    feedback: "Příběh člověka patří jen jemu. Spekulace jsou kruté.",
+  },
+  {
+    tag: "jidelna",
+    art: [
+      "  .------------------------. ",
+      "  |   JIDELNA             | ",
+      "  |------------------------| ",
+      "  |  [x]  vepro            | ",
+      "  |  [x]  kure             | ",
+      "  |  [x]  ryba             | ",
+      "  |  [ ]  vege  ???        | ",
+      "  '------------------------' ",
+      "                             ",
+      "  Aneta (vegetarianka):      ",
+      "  'a pro mne??' :(           ",
+      "  ostatni: haha              ",
+    ].join("\n"),
+    text: "Spolužačka je vegetariánka. Ve školní jídelně není nic bez masa a ostatní se jí smějí.",
+    choices: [
+      "Smějete se taky.",
+      "Bráníš ji a navrhuješ, aby škola přidala vegetariánskou možnost.",
+      "Mlčíš.",
+      "Řekneš jí, ať si přinese jídlo z domova a neotravuje.",
+    ],
+    correct: 1,
+    feedback: "Stravovací volba je osobní. Podpořit spravedlivé podmínky pro všechny je správné.",
+  },
+];
+
+const Q_COUNT = 10;
+const MAX_SCORE = Q_COUNT * 10;
+const LB_KEY = "tolerance-kviz-lb-v4";
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+function pickRandom(arr, n) { return shuffle(arr).slice(0, n); }
+function loadBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch { return []; } }
+function saveBoard(b) { try { localStorage.setItem(LB_KEY, JSON.stringify(b)); } catch {} }
+
+function App() {
+  const [phase, setPhase] = useState("name");
+  const [name, setName] = useState("");
+  const [questions, setQuestions] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [board, setBoard] = useState([]);
+  const [tab, setTab] = useState("result");
+
+  useEffect(() => { setBoard(loadBoard()); }, []);
+
+  function startGame() {
+    if (!name.trim()) return;
+    const qs = pickRandom(Q, Q_COUNT).map(q => ({
+      ...q,
+      opts: shuffle(q.choices.map((c, i) => ({ text: c, isCorrect: i === q.correct }))),
+    }));
+    setQuestions(qs); setIdx(0); setScore(0); setSelected(null); setPhase("game");
+  }
+
+  function pick(opt) {
+    if (selected) return;
+    setSelected(opt);
+    if (opt.isCorrect) setScore(s => s + 10);
+  }
+
+  function next() {
+    if (idx + 1 >= questions.length) {
+      const entry = { name: name.trim(), score, date: new Date().toLocaleDateString("cs-CZ") };
+      const updated = [...board, entry].sort((a, b) => b.score - a.score).slice(0, 20);
+      setBoard(updated); saveBoard(updated); setTab("result"); setPhase("end");
+    } else {
+      setIdx(i => i + 1); setSelected(null);
+    }
+  }
+
+  const q = questions[idx];
+  const pct = Math.round((score / MAX_SCORE) * 100);
+  const endMsg = pct === 100 ? "Perfektní." : pct >= 80 ? "Hodně dobře." : pct >= 60 ? "Solidní základ." : pct >= 40 ? "Dost prostoru." : "Zamysli se nad svými volbami.";
+
+  const C = {
+    bg: "#f5f5f5", white: "#fff", text: "#111", muted: "#999",
+    border: "#e8e8e8", accent: "#111",
+    greenBg: "#f0fdf4", greenBorder: "#86efac", greenText: "#15803d",
+    redBg: "#fef2f2", redBorder: "#fca5a5", redText: "#dc2626",
+    dim: "#ccc",
+  };
+
+  function cStyle(opt) {
+    if (!selected) return { background: C.white, border: "1.5px solid " + C.border, color: C.text };
+    if (opt.isCorrect) return { background: C.greenBg, border: "1.5px solid " + C.greenBorder, color: C.greenText };
+    if (opt === selected) return { background: C.redBg, border: "1.5px solid " + C.redBorder, color: C.redText };
+    return { background: C.white, border: "1.5px solid " + C.border, color: C.dim };
+  }
+
+  const btn = { padding: "13px 28px", background: C.accent, color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+
+  return (
+    <div style={{ background: C.bg, minHeight: "100vh" }}>
+      <div style={{ maxWidth: 520, margin: "0 auto", padding: "40px 20px 100px" }}>
+
+        <div style={{ marginBottom: 36 }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: C.text, letterSpacing: -0.5 }}>Tolerance kvíz</div>
+          <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>hra o volbách v běžném životě</div>
+        </div>
+
+        {phase === "name" && (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Tvoje přezdívka</div>
+            <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && startGame()}
+              placeholder="tvoje přezdívka" autoFocus
+              style={{ width: "100%", padding: "13px 16px", border: "1.5px solid " + C.border, borderRadius: 10, background: C.white, fontSize: 16, color: C.text, fontFamily: "inherit", outline: "none", marginBottom: 16 }} />
+            <button onClick={startGame} style={btn}>Začít →</button>
+            {board.length > 0 && (
+              <div style={{ marginTop: 48 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 16 }}>Leaderboard</div>
+                {board.slice(0, 10).map((e, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", padding: "10px 0", borderBottom: "1px solid " + C.border }}>
+                    <span style={{ fontSize: 13, color: i < 3 ? C.text : C.muted, fontWeight: i < 3 ? 700 : 400, minWidth: 24 }}>{i + 1}.</span>
+                    <span style={{ flex: 1, fontSize: 15, color: C.text, paddingLeft: 8 }}>{e.name}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700 }}>{e.score}</span>
+                    <span style={{ fontSize: 12, color: C.muted, marginLeft: 12 }}>{e.date}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {phase === "game" && q && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.muted, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 16 }}>
+              <span>{q.tag}</span>
+              <span style={{ textTransform: "none", letterSpacing: 0, fontWeight: 400, fontSize: 13 }}>{idx + 1} / {Q_COUNT} · {score} b.</span>
+            </div>
+            <div style={{ height: 3, background: C.border, borderRadius: 99, marginBottom: 24 }}>
+              <div style={{ height: "100%", width: (idx / Q_COUNT * 100) + "%", background: C.text, borderRadius: 99, transition: "width 0.35s" }} />
+            </div>
+            <div className="ascii">{q.art}</div>
+            <p style={{ fontSize: 17, lineHeight: 1.75, color: C.text, fontWeight: 500, marginBottom: 22 }}>{q.text}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+              {q.opts.map((opt, i) => (
+                <button key={i} onClick={() => pick(opt)} disabled={!!selected}
+                  style={{ ...cStyle(opt), borderRadius: 10, padding: "13px 16px", cursor: selected ? "default" : "pointer", textAlign: "left", fontFamily: "inherit", fontSize: 15, lineHeight: 1.5 }}>
+                  {opt.text}
+                </button>
+              ))}
+            </div>
+            {selected && (
+              <div style={{ fontSize: 14, color: "#555", lineHeight: 1.7, padding: "14px 16px", background: C.white, borderRadius: 10, border: "1.5px solid " + C.border, marginBottom: 16 }}>
+                {q.feedback}
+              </div>
+            )}
+            {selected && (
+              <button onClick={next} style={btn}>
+                {idx + 1 < Q_COUNT ? "Další →" : "Výsledky →"}
+              </button>
+            )}
+          </>
+        )}
+
+        {phase === "end" && (
+          <>
+            <div style={{ display: "flex", borderBottom: "1.5px solid " + C.border, marginBottom: 32 }}>
+              {["result", "board"].map(t => (
+                <button key={t} onClick={() => setTab(t)}
+                  style={{ padding: "10px 20px", border: "none", background: "none", fontFamily: "inherit", fontSize: 14, fontWeight: tab === t ? 600 : 400, color: tab === t ? C.text : C.muted, borderBottom: tab === t ? "2px solid " + C.text : "2px solid transparent", marginBottom: -1.5, cursor: "pointer" }}>
+                  {t === "result" ? "Výsledek" : "Leaderboard"}
+                </button>
+              ))}
+            </div>
+            {tab === "result" && (
+              <div>
+                <div style={{ fontSize: 56, fontWeight: 700, color: C.text, lineHeight: 1 }}>{score}</div>
+                <div style={{ fontSize: 14, color: C.muted, marginBottom: 24, marginTop: 4 }}>z {MAX_SCORE} bodů · {pct} %</div>
+                <p style={{ fontSize: 16, color: "#444", lineHeight: 1.8, marginBottom: 36 }}>{endMsg}</p>
+                <button onClick={() => setPhase("name")} style={btn}>Hrát znovu →</button>
+              </div>
+            )}
+            {tab === "board" && (
+              <div>
+                {board.length === 0 && <div style={{ color: C.muted, fontSize: 14 }}>Zatím nikdo.</div>}
+                {board.map((e, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", padding: "10px 8px", borderRadius: 8, background: e.name === name.trim() && e.score === score ? C.greenBg : "none" }}>
+                    <span style={{ fontSize: 13, color: i < 3 ? C.text : C.muted, fontWeight: i < 3 ? 700 : 400, minWidth: 24 }}>{i + 1}.</span>
+                    <span style={{ flex: 1, fontSize: 15, color: C.text, paddingLeft: 8, fontWeight: e.name === name.trim() && e.score === score ? 600 : 400 }}>{e.name}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700 }}>{e.score}</span>
+                    <span style={{ fontSize: 12, color: C.muted, marginLeft: 12 }}>{e.date}</span>
+                  </div>
+                ))}
+                <div style={{ marginTop: 24 }}>
+                  <button onClick={() => setPhase("name")} style={btn}>Hrát znovu →</button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        <div style={{ marginTop: 80, fontSize: 12, color: C.dim }}>By Samuel Brettschneider</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
